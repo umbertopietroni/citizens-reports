@@ -271,7 +271,7 @@ def msgtosegnalazione(msg):
 		
 		segnalazione = Segnalazione(msg_id,text)
 		if msg["category"]:
-			segnalazione.setCategory(msg["category"]
+			segnalazione.setCategory(msg["category"])
 		return segnalazione
 	print("ERROR: message not defined")
 
