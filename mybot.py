@@ -11,6 +11,8 @@ from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 from telepot.loop import MessageLoop
 import traceback
 
+import segnalazioni_classes
+
 bad_words = ["fanculo", "vaffa", "vaffanculo", "stronzo", "stronzi", "cazzo", "fottiti", "fottuto", "merda"]
 
 users_category_choice = {}
@@ -147,6 +149,8 @@ def on_callback_query(msg):
 
 	
 	msg_id = telepot.origin_identifier(msg)
+	
+	#utente invia segnalazione corretta: calcolo della categoria e richiesta di conferma
 	if (query_data == "invia"):
 		print("pressed invia")
 		response = """Grazie %s \nHo ricevuto la sua segnalazione! Sto calcolando la categoria...\n/menu_principale """ #% (str(["first_name"]))	# pollice su
@@ -167,7 +171,7 @@ def on_callback_query(msg):
 		except:
 			print('Old Query Pressed')
 
-		
+	#utente conferma che categoria calcolata è corretta: posso salvare la segnalazione
 	elif (query_data == "si"):
 		keyboard_btns = []
 		keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
@@ -178,6 +182,8 @@ def on_callback_query(msg):
 		
 		pprint.pprint(msg_to_save, open(msg_dir +'.dict', 'w'))
 		msg_to_save = None
+		
+	#categoria calcolata per utente è sbagliata: chiedo direttamente quale sia quella corretta
 	elif (query_data == "no"):
 		keyboard_btns = []
 		for row in REPLY_BUTTONS_TEXT:
@@ -187,10 +193,12 @@ def on_callback_query(msg):
 			keyboard_btns.append(L)
 		keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
 		bot.editMessageText(msg_id,'Scegli quale categoria è più corretta', reply_markup = keyboard)
+	
+	#tutte gli altri tipi di callback nascono quando utente sceglie categoria corretta. Poi posso salvare la segnalazione
 	else:
 		keyboard_btns = []
 		keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
-		#bot.editMessageReplyMarkup(msg_id,reply_markup = keyboard)
+		
 		text = """Grazie! La sua segnalazione associata alla categoria %s è stata registrata correttamente. \nPuò inserire una nuova segnalazione""" % query_data
 		bot.editMessageText(msg_id,text, reply_markup = keyboard)
 		print('Callback Query:', query_id, from_id, query_data,msg_id)
@@ -242,20 +250,6 @@ def on_chat_message(msg):
 		
 		
 		
-
-		#response = """Grazie %s \nLa tua segnalazione è stata ricevuta! Sto calcolando la categoria...\n/menu_principale """ % (str(userinfo["first_name"]))	# pollice su
-		#bot.sendMessage(chat_id, response)
-		
-		##SIMULAZIONE CLASSIFICAZIONE
-		#category= (random.choice(random.choice(REPLY_BUTTONS_TEXT)))[0]
-		
-		#keyboard_btns = []
-		#L = []
-		#L.append(InlineKeyboardButton(text="Si", callback_data="si"))
-		#L.append(InlineKeyboardButton(text="No", callback_data="no"))
-		#keyboard_btns.append(L)
-		#response = """Calcolato categoria %s: è corretta?""" % category
-		
 		msg["text"] = received_text
 		msg_to_save = msg
 		
@@ -268,7 +262,18 @@ def on_chat_message(msg):
 		bot.sendMessage(chat_id, "Ooops! Qualcosa e' andato storto! Riprova, Grazie!")
 		bot.sendSticker(chat_id, "CAADAgADzwUAAmMr4gmeXsfnL_icMwI")
 		print (traceback.format_exc())
-
+		
+		
+def msgtosegnalazione(msg):
+	if msg:
+		msg_id = msg["chat"]["id"]
+		text = msg["text"]
+		
+		segnalazione = Segnalazione(msg_id,text)
+		if msg["category"]:
+			segnalazione.setCategory(msg["category"]
+		return segnalazione
+	print("ERROR: message not defined")
 
 #TOKEN = '413385905:AAEN1t4iOHGwJ8UDzkSPJH2a7NsPw3bV3ag'		# AnzioBot
 
