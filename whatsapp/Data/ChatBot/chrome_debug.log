@@ -1,0 +1,2 @@
+[5522:5522:0313/092741.261661:WARNING:password_store_factory.cc(241)] Using basic (unencrypted) store for password storage. See https://chromium.googlesource.com/chromium/src/+/master/docs/linux_password_storage.md for more information about password storage options.
+[5522:5522:0313/092749.253113:INFO:chrome_cryptauth_service.cc(231)] Profile is not authenticated yet; waiting before starting CryptAuth managers.
