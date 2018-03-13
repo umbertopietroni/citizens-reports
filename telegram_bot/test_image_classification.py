@@ -19,7 +19,7 @@ def predict_image(filename):
 	issueimage = IssueImage(filename)
 
 	#apikey = open('apikey.txt', 'r').read().replace("\r", "").replace("\n", "")
-	apikey = 'cec50acde8994ab2aca7ed5fd0c6bd31'
+	
 
 	print("...using apikey '{}'".format(apikey))
 	classification_dict = clarifai_interface.clarifai_prediction(issueimage, apikey=apikey)

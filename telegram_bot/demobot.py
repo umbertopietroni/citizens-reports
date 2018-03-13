@@ -367,11 +367,8 @@ def predict_text(X):
 
 
 
-#TOKEN = '413385905:AAEN1t4iOHGwJ8UDzkSPJH2a7NsPw3bV3ag'		# AnzioBot
 
-#TOKEN = '385347809:AAGluuiZF1BbRtA9y6peSB6MbR_saJYGlVU'			# Segnalazioni_MontecchioEmilia_Bot DEVEL
-#TOKEN = '534678830:AAH3MvgnILV71lRvFerjBTKxOn-C3WaMh3Y' 		# Segnalazioni_MontecchioEmilia_Bot ON LINE
-TOKEN = '462484974:AAG-6eBXHXy6OEdFUCoRSF8klZohXobfnXw'           #Test_Segnalazioni_bot
+TOKEN = ''           #Test_Segnalazioni_bot
 bot = telepot.Bot(TOKEN)
 
 import sys
