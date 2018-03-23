@@ -1,2 +1,3 @@
-[5522:5522:0313/092741.261661:WARNING:password_store_factory.cc(241)] Using basic (unencrypted) store for password storage. See https://chromium.googlesource.com/chromium/src/+/master/docs/linux_password_storage.md for more information about password storage options.
-[5522:5522:0313/092749.253113:INFO:chrome_cryptauth_service.cc(231)] Profile is not authenticated yet; waiting before starting CryptAuth managers.
+[12545:12545:0323/115802.107591:WARNING:password_store_factory.cc(241)] Using basic (unencrypted) store for password storage. See https://chromium.googlesource.com/chromium/src/+/master/docs/linux_password_storage.md for more information about password storage options.
+[12545:12545:0323/115802.570491:ERROR:CONSOLE(168)] "Failed to execute 'postMessage' on 'DOMWindow': The target origin provided ('https://web.whatsapp.com') does not match the recipient window's origin ('https://www.google.com').", source: chrome-search://most-visited/single.js (168)
+[12545:12545:0323/115808.449021:INFO:chrome_cryptauth_service.cc(231)] Profile is not authenticated yet; waiting before starting CryptAuth managers.
