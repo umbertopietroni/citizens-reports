@@ -53,3 +53,11 @@ def predict_image(filename):
 	print("Class probabilities:", class_probabilities)
 	
 	return prediction,class_probabilities
+
+def create_prob_dict(class_prob):
+	dict_issue = {}
+	dict_issue["ambiente"] = class_prob[0]
+	dict_issue["illuminazione"] = class_prob[1]
+	dict_issue["manutenzione"] = class_prob[2]
+	dict_issue["sicurezza"] = class_prob[3]
+	return dict_issue

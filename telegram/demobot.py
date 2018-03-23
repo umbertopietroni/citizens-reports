@@ -21,7 +21,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 
 sys.path.insert(0, '../wsinterface/')
-from image_classification import predict_image
+from image_classification import predict_image, create_prob_dict
 
 
 bad_words = ["fanculo", "vaffa", "vaffanculo", "stronzo", "stronzi", "cazzo", "fottiti", "fottuto", "merda"]
@@ -158,7 +158,7 @@ def on_callback_query(msg):
 			print(X)
 			category, categories_prob = predict_text(X)
 			msg_to_save[chat_id]["category"] = category
-			text_dict = create_dict(categories_prob)
+			text_dict = create_prob_dict(categories_prob)
 			msg_to_save[chat_id]["text_category"] = text_dict
 			
 			#CALCOLO CATEGORIA FOTO
@@ -172,7 +172,7 @@ def on_callback_query(msg):
 					bot.download_file(photo_id, filename)
 					
 					photo_category,photo_prob = predict_image(filename)
-					dict_prob = create_dict(photo_prob)
+					dict_prob = create_prob_dict(photo_prob)
 					msg_to_save[chat_id]["photo"][i]["photo_category"] = dict_prob
 					i += 1
 					
@@ -346,16 +346,6 @@ def msg_to_segnalazione(msg,msg_dir):
 		return segnalazione
 		
 	print("ERROR: message not defined")
-	
-def create_dict(class_prob):
-	dict_issue = {}
-	dict_issue["ambiente"] = class_prob[0]
-	dict_issue["illuminazione"] = class_prob[1]
-	dict_issue["manutenzione"] = class_prob[2]
-	dict_issue["sicurezza"] = class_prob[3]
-	return dict_issue
-
-
 	
 	
 def predict_text(X):

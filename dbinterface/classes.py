@@ -40,6 +40,7 @@ class IssueImage:
 		return self.__confidence
 		
 #	def setCategory(self, category):
+#		# category is autmatically detected by confidence dict in setClassificationDict method
 #		self.__category = category
 		
 	def getClassificationDict(self):
@@ -49,6 +50,15 @@ class IssueImage:
 		self.__classification_dict = classification_dict
 		self.__category = list(classification_dict.keys())[list(classification_dict.values()).index(max(classification_dict.values()))]
 		self.__confidence = max(classification_dict.values())
+
+	@property
+	def info(self):
+		return {
+			"filename": self.getFilename(),
+			"category": self.getCategory(),
+			"confidence": self.getConfidence(),
+			"classification_dict": self.__classification_dict
+		}
 		
 
 #@add_properties	
@@ -110,6 +120,7 @@ class Issue:
 		
 	def getUserId(self):	
 		return 	self.__info["user_id"]
+		
 	def getMsgId(self):	
 		return 	self.__info["msg_id"]
 		
@@ -149,3 +160,11 @@ class Issue:
 	@staticmethod
 	def getIssueByMsgIdUserId(user_id, msg_id):
 		return None
+		
+	@property
+	def info(self):
+		tmp = self.getInfo()
+		imgs = tmp.get('images', [])
+		tmp['images_detail'] = [i.info for i in tmp.get('images', [])]		
+		return tmp
+
