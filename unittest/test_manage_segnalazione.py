@@ -4,16 +4,16 @@ import pprint
 import json
 import time
 
+sys.path.insert(0, '../dbinterface/')
 from classes import *
 
-user_id = int(sys.argv[1])
-msg_id = int(sys.argv[2])
-
-"""
+if len(sys.argv) < 3:
+	exit("""
 Input : user_id, msg_id
 Ex: python3 test_manage_segnalazione.py 4486779 249
-
-"""
+			""")
+user_id = int(sys.argv[1])
+msg_id = int(sys.argv[2])
 
 # print(user_id, msg_id)
 
@@ -28,15 +28,20 @@ issues_list = os.listdir(inbox)
 #print(issues_list)
 for d in issues_list:
 	curdir = inbox + d + '/'
-	msgdict = eval(open(curdir + 'msg.dict', 'r').read())
+	
+	msg_dict_file = curdir + 'msg.dict'
+	if not os.path.exists(msg_dict_file):
+		continue
+	
+	msgdict = eval(open(msg_dict_file, 'r').read())
 	if msgdict['chat']['id'] == user_id and msgdict['message_id'] == msg_id:
-#		pprint.pprint(msgdict)
+		#pprint.pprint(msgdict)
 
 		user_id = msgdict['chat']['id']
 		msg_id = msgdict['message_id']
 
+		# create new Issue
 		s = Issue(msg_id, '')
-			
 		s.setInfo("firstname", msgdict.get('from', {}).get('first_name', ''))
 		s.setInfo("lastname", msgdict.get('from', {}).get('last_name', ''))
 		s.setInfo("username", msgdict.get('from', {}).get('username', ''))
@@ -49,20 +54,12 @@ for d in issues_list:
 		s.setCategory(msgdict['category'])
 		s.setClassificationDict(msgdict.get('text_category', {}))
 		
-		#print(s.channel)
-		
+		# add all issue images 
 		for p in msgdict["photo"]:
-			
 			im = IssueImage(curdir + p["file_id"] + ".jpg")
 			im.setClassificationDict(p['photo_category'])
-			#pprint.pprint(p)
 			s.addImage(im)
 			
-		
-#		print(s.getInfo("channel"))
-#		print(s.getInfo("msg_id"))
-#		print(s.getInfo())
-#		print(s.getClassificationDict())
-
 		s.save()
 
+		pprint.pprint(s.info)
