@@ -25,8 +25,6 @@ def getorderedfiles(dirpath):
 DOWNLOAD_PATH = "/home/umberto/Scaricati/"
 
 
-
-
 def delete_chat(driver,chat_id):
 	usersDiv = driver.find_element_by_id("side")
 	messageDiv = driver.find_element_by_id("main")
