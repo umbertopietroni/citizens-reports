@@ -91,3 +91,15 @@ class Issue:
 	def setClassificationDict(self, classification_dict):
 		self.__classification_dict = classification_dict
 		
+	def getLatitude(self):
+		return self.__info["position"]["latitude"]
+		
+	def setLatitude(self, lat):
+		self.__info["position"]["latitude"] = lat
+
+	def getLongitude(self):
+		return self.__info["position"]["longitude"]
+		
+	def setLongitude(self, lon):
+		self.__info["position"]["longitude"] = lon
+
