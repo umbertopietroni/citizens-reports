@@ -202,6 +202,7 @@ def save_msg(driver,messageList,chatTitle):
 				text += ct.text +' '
 			
 	m  = {
+	"msg_id" : ts,
 	"ts": date,
 	"text": text,
 	"user": chatTitle,
