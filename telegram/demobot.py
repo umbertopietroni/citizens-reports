@@ -47,6 +47,40 @@ def cleanChars(s):
 		except:
 			pass
 	return s
+	
+def preprocess(txt):
+	txt = txt.replace("?", " ")
+	txt = txt.replace("!", " ")
+	txt = txt.replace("'", " ")
+	txt = txt.replace(".", " ")
+	txt = txt.replace(",", " ")
+	txt = txt.replace("<br />", " ")
+	txt = txt.replace("\\n", " ")
+	txt = txt.replace("</td>", " ")
+	txt = txt.replace("<td>", " ")
+	tmp = ''
+	for ch in txt:
+		if ch in (' ') or \
+		(ord(ch) >= 65 and ord(ch) <= 90) or \
+		(ord(ch) >= 97 and ord(ch) <= 122) or \
+		0:
+			tmp += ch
+	tokens = [t for t in tmp.lower().split() if len(t) > 3]
+	return ' '.join(tokens).strip()
+	
+def predict_text(x):
+	x = [preprocess(x)]
+	with open('../classifiers/nb_classifier.pickle', 'rb') as handle:
+		clf = pickle.load(handle)
+	with open('../classifiers/nb_vectorizer.pickle', 'rb') as handle:
+		vectorizer = pickle.load(handle)
+
+	# transform s into an array with thr trained vectorizer
+	v = vectorizer.transform(x).toarray()
+	category = clf.predict(v)[0]
+	categories = clf.predict_proba(v)[0]
+	#print("Predicted class: Ambiente Illuminazione Manutenzione Sicurezza \n", clf.predict_proba(v)[0])
+	return category,categories
 
 
 def menu_function(text, chat_id):
@@ -151,7 +185,7 @@ def on_callback_query(msg):
 		except:
 			pass
 		try:
-			X = [msg_to_save[chat_id].get("text","")]
+			X = msg_to_save[chat_id].get("text","")
 			#response = """Grazie!\nHo ricevuto la sua segnalazione: "%s".\n/menu_principale """ % (X[0])
 			
 			##CALCOLO CATEGORIA TESTO
@@ -189,7 +223,7 @@ def on_callback_query(msg):
 			keyboard_btns.append(L)
 			keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
 
-			response = """Grazie!\nHo ricevuto la sua segnalazione "%s". Calcolato categoria %s: è corretta?""" % (X[0],category)
+			response = """Grazie!\nHo ricevuto la sua segnalazione "%s". Calcolato categoria %s: è corretta?""" % (X,category)
 			bot.editMessageText(msg_id,response, reply_markup = keyboard)
 			
 		
@@ -348,23 +382,13 @@ def msg_to_segnalazione(msg,msg_dir):
 	print("ERROR: message not defined")
 	
 	
-def predict_text(X):
-	with open('../classifiers/nb_classifier.pickle', 'rb') as handle:
-		clf = pickle.load(handle)
-	with open('../classifiers/nb_vectorizer.pickle', 'rb') as handle:
-		vectorizer = pickle.load(handle)
 
-	# transform s into an array with thr trained vectorizer
-	v = vectorizer.transform(X).toarray()
-	category = clf.predict(v)[0]
-	categories = clf.predict_proba(v)[0]
-	#print("Predicted class: Ambiente Illuminazione Manutenzione Sicurezza \n", clf.predict_proba(v)[0])
-	return category,categories
 
 
 
 
 TOKEN = open('telegram.token.txt', 'r').read().replace("\n", "").replace("\t", "")
+
 bot = telepot.Bot(TOKEN)
 
 

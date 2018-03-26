@@ -25,6 +25,8 @@ def getorderedfiles(dirpath):
 DOWNLOAD_PATH = "/home/umberto/Scaricati/"
 
 
+
+
 def delete_chat(driver,chat_id):
 	usersDiv = driver.find_element_by_id("side")
 	messageDiv = driver.find_element_by_id("main")
@@ -126,39 +128,61 @@ def save_msg(driver,messageList,chatTitle):
 	m= {}
 	photo = []
 	date = []
+	pos = []
 	
 	for m in messageList:
 		images = m.find_elements_by_tag_name("img")
 		if images:
 			im = images[0]
-			src = im.get_attribute("src").replace("blob:", "")
-			im.click()
-			#mpt = driver.find_elements_by_class_name("media-panel-tools")[0]
-			mpt = driver.find_elements_by_class_name("_3Kxus")[0]
-			buttons = mpt.find_elements_by_class_name("rAUz7")
-			# download
-			buttons[3].click()
-			# close window
-			buttons[4].click()
-
-			# look for last downloaded file
-			time.sleep(1)
-			downloaded_files = getorderedfiles(DOWNLOAD_PATH)
-			downloaded_files.reverse()
-			firstfile = downloaded_files.pop(0)
-
-			if firstfile.startswith("WhatsApp"):
-				print("Moving file : " + DOWNLOAD_PATH+firstfile)
-				downloaded_fname =  firstfile.replace("WhatsApp Image ", "")
-				downloaded_fname =  downloaded_fname.replace(" ", "_")
-				downloaded_fname =  downloaded_fname.replace(" ", "_")
-				downloaded_fname =  downloaded_fname.replace("_at_", "__")
+			pos_class = im.get_attribute("class")
+			#is_pop = im.find_elements_by_class_name("_1Qnxi")
+			if pos_class == "_1Qnxi":
+				print("posizione trovata")
+				father = im.find_element_by_xpath('..')
+				if father:
+					pos = father.get_attribute("href")
+					if ("maps" in pos):
+						#https://maps.google.com/maps?q=44.7649225%2C10.3085252&z=17&hl=it
+						#print(pos)
+						lat_rex = re.compile(r'q=(.+?)%2C')
+						long_rex = re.compile(r'%2C(.+?)&z=')
+						lat = float(lat_rex.findall(pos)[0])
+						lon = float(long_rex.findall(pos)[0])
+						#print(lat,lon)
+						pos = [lat,lon]
+						print(pos)
+						
 				
-				shutil.move(DOWNLOAD_PATH+firstfile, msg_dir + "/%s" % downloaded_fname)
-				photo.append( msg_dir + "/%s" % downloaded_fname)
 				
-				#content = open(filename, 'rb').read()
-			
+			else:
+				src = im.get_attribute("src").replace("blob:", "")
+				im.click()
+				#mpt = driver.find_elements_by_class_name("media-panel-tools")[0]
+				mpt = driver.find_elements_by_class_name("_3Kxus")[0]
+				buttons = mpt.find_elements_by_class_name("rAUz7")
+				# download
+				buttons[3].click()
+				# close window
+				buttons[4].click()
+
+				# look for last downloaded file
+				time.sleep(1)
+				downloaded_files = getorderedfiles(DOWNLOAD_PATH)
+				downloaded_files.reverse()
+				firstfile = downloaded_files.pop(0)
+
+				if firstfile.startswith("WhatsApp"):
+					print("Moving file : " + DOWNLOAD_PATH+firstfile)
+					downloaded_fname =  firstfile.replace("WhatsApp Image ", "")
+					downloaded_fname =  downloaded_fname.replace(" ", "_")
+					downloaded_fname =  downloaded_fname.replace(" ", "_")
+					downloaded_fname =  downloaded_fname.replace("_at_", "__")
+					
+					shutil.move(DOWNLOAD_PATH+firstfile, msg_dir + "/%s" % downloaded_fname)
+					photo.append( msg_dir + "/%s" % downloaded_fname)
+					
+					#content = open(filename, 'rb').read()
+				
 			
 			
 		else:
@@ -182,6 +206,7 @@ def save_msg(driver,messageList,chatTitle):
 	"text": text,
 	"user": chatTitle,
 	"photo": photo,
+	"pos": pos,
 	}
 		
 	print(m)
@@ -191,7 +216,7 @@ def save_msg(driver,messageList,chatTitle):
 		
 def is_timeout(date):
 	now = datetime.now()
-	delta = timedelta(seconds=40)
+	delta = timedelta(seconds=60)
 	print(now-date)
 	
 	if now-date>delta:

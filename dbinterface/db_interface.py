@@ -1,4 +1,6 @@
 import MySQLdb
+#import pymysql
+#pymysql.install_as_MySQLdb()
 import MySQLdb.cursors
 from connection_parameters import *
 
