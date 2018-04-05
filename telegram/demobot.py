@@ -5,6 +5,7 @@ import time
 import os
 import pprint
 import traceback
+from datetime import datetime
 
 import sys
 sys.path.insert(0, '../dbinterface/')
@@ -258,7 +259,12 @@ def on_callback_query(msg):
 		##SALVATAGGIO
 		pprint.pprint(msg_to_save[chat_id], open(msg_dir+"/" +'msg.dict', 'w'))
 		segnalazione = msg_to_segnalazione(msg_to_save[chat_id],msg_dir)
-		segnalazione.printIssue()
+		if segnalazione:
+			segnalazione.printIssue()
+			with open(msg_dir+"/"+'issue.pickle', 'wb') as output:
+				pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
+    
+
 		
 		
 		
@@ -284,7 +290,10 @@ def on_callback_query(msg):
 		#salvataggio
 		pprint.pprint(msg_to_save[chat_id], open(msg_dir+"/" +'msg.dict', 'w'))
 		segnalazione = msg_to_segnalazione(msg_to_save[chat_id],msg_dir)
-		segnalazione.printIssue()
+		if segnalazione:
+			segnalazione.printIssue()
+			with open(msg_dir+"/"+'issue.pickle', 'wb') as output:
+				pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
 		
 
 
@@ -321,9 +330,12 @@ def on_chat_message(msg):
 		last_msg = store.last_msg(chat_id)
 		if (last_msg and last_msg["saved"]==False):
 			photo_list = last_msg.get("photo",[])
+			position = last_msg.get("location",[])
 			
 			msg["text"] = last_msg.get("text","")+" "+received_text
 			msg["photo"] = photo_list + photo
+			if not msg.get("location",[]):
+				msg["location"] = position
 			
 				
 				
@@ -361,20 +373,47 @@ def msg_to_segnalazione(msg,msg_dir):
 	if msg:
 		chat_id = msg["chat"]["id"]
 		msg_id = msg["message_id"]
+		
+		user_id = msg["from"]["id"]
+		firstname = msg["from"]["first_name"]
+		lastname = msg["from"]["last_name"]
 		username = msg["from"]["username"]
+		
 		text = msg.get("text","")
 		photo= msg.get("photo",[])
-		date = msg.get("date", "")
+		text_classification_dict = msg.get("text_category", [])
+		
+		pre_date = int(msg.get("date", ""))
+		date = datetime.fromtimestamp(pre_date)
+		
+		pos = msg.get("location",[])
+		lat = ""
+		lon = ""
+		if pos:
+			lat = pos.get("latitude","")
+			lon = pos.get("longitude","")
 		
 		
-		segnalazione = Issue(msg_id,username)
+		
+		segnalazione = Issue(msg_id)
+		segnalazione.setInfo("channel", "telegram")
+		segnalazione.setInfo("msg_id",msg_id)
 		segnalazione.setInfo("text",text)
 		segnalazione.setInfo("date",date)
+		segnalazione.setInfo("user_id",user_id)
+		segnalazione.setInfo("username", username)
+		segnalazione.setInfo("firstname", firstname)
+		segnalazione.setInfo("lastname", lastname)
+		segnalazione.setLatitude(lat)
+		segnalazione.setLongitude(lon)
 		segnalazione.setCategory(msg.get("category",""))
-		if photo:
-			photo_id = photo[-1]["file_id"] # dimensione maggiore
+		segnalazione.setClassificationDict(text_classification_dict)
+		for p in photo:
+			photo_id = p["file_id"] # dimensione maggiore
 			filename = msg_dir + "/" + photo_id + ".jpg"
+			img_classification_dict = p.get("photo_category",[])
 			image = IssueImage(filename)
+			
 			segnalazione.addImage(image)
 		
 		return segnalazione
@@ -388,6 +427,7 @@ def msg_to_segnalazione(msg,msg_dir):
 
 
 TOKEN = open('telegram.token.txt', 'r').read().replace("\n", "").replace("\t", "")
+#TOKEN = '462484974:AAG-6eBXHXy6OEdFUCoRSF8klZohXobfnXw' 
 
 bot = telepot.Bot(TOKEN)
 

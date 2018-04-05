@@ -15,6 +15,11 @@ from selenium.webdriver.common.by import By
 import re
 from datetime import datetime
 from datetime import timedelta
+import pickle
+
+import sys
+sys.path.insert(0, '../dbinterface/')
+from classes import *
 
 def getorderedfiles(dirpath):
 	a = [s for s in os.listdir(dirpath)
@@ -202,16 +207,21 @@ def save_msg(driver,messageList,chatTitle):
 				text += ct.text +' '
 			
 	m  = {
-	"msg_id" : ts,
-	"ts": date,
+	"message_id" : ts,
+	"date": date,
 	"text": text,
 	"user": chatTitle,
 	"photo": photo,
-	"pos": pos,
+	"location": pos,
 	}
 		
 	print(m)
 	pprint.pprint(m, open(msg_dir+"/" +'msg.dict', 'w'))
+	segnalazione = msg_to_segnalazione(m,msg_dir)
+	if segnalazione:
+		segnalazione.printIssue()
+		with open(msg_dir+"/"+'issue.pickle', 'wb') as output:
+			pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
 	
 	
 		
@@ -226,6 +236,42 @@ def is_timeout(date):
 	else:
 		print("non ancora")
 		return False
+		
+def msg_to_segnalazione(msg,msg_dir):
+	if msg:
+		
+		msg_id = msg["message_id"]
+		user_id = msg["user"]
+		
+		text = msg.get("text","")
+		photo= msg.get("photo",[])
+		date = msg.get("date", "")
+		pos = msg.get("location",[])
+		#text_classification_dict = msg.get("text_category", [])
+		
+		
+		segnalazione = Issue(msg_id)
+		segnalazione.setInfo("channel", "whatsapp")
+		segnalazione.setInfo("msg_id",msg_id)
+		segnalazione.setInfo("text",text)
+		segnalazione.setInfo("date",date)
+		segnalazione.setInfo("user_id",user_id)
+		segnalazione.setInfo("phone_number", user_id)
+		if pos:
+			segnalazione.setLatitude(pos[0])
+			segnalazione.setLongitude(pos[1])
+		#segnalazione.setCategory(msg.get("category",""))
+		#segnalazione.setClassificationDict(text_classification_dict)
+		for p in photo:
+			#photo_id = p["file_id"] # dimensione maggiore
+			#filename = msg_dir + "/" + photo_id + ".jpg"
+			#img_classification_dict = p.get("photo_category",[])
+			image = IssueImage(p)
+			segnalazione.addImage(image)
+		
+		return segnalazione
+		
+	print("ERROR: message not defined")
 	
 def main(driver, chatHistory, replyQueue, firstRun):		
 	
@@ -245,19 +291,6 @@ def main(driver, chatHistory, replyQueue, firstRun):
 		#print("chatTitle = ", chatTitle[0].text)
 		unread = contact.find_elements_by_class_name("unread")
 		#forse al posto di unread ci vuole "OUeyt"
-		#print("unread = ", unread)
-		
-		#if unread:
-			## click on contact element and read all presents messages
-			#print("New message(s) for ", chatTitle[0].text)
-			#contact.click()
-			#messageList = messageDiv.find_elements_by_class_name("msg")
-			#print("messageList = ", len(messageList))
-			#print("="*100)
-			
-			#messageList.reverse()
-			
-			#new_messages.append(messageList)
 
 		if chatTitle[0].text:
 			# click on contact element and read all incoming messages
@@ -292,12 +325,14 @@ def main(driver, chatHistory, replyQueue, firstRun):
 					date = now.replace(hour=h, minute=mi)
 					
 				if is_timeout(date):
+					
+					save_msg(driver,messageList, chatTitle[0].text)
+					
 					##INVIO MESSAGGIO
 					input_box = driver.find_element_by_class_name('_2S1VP')
 					input_box.send_keys("Segnalazione Ricevuta, Grazie!")
 					driver.find_element_by_xpath('//span[@data-icon="send"]').click()
 					
-					save_msg(driver,messageList, chatTitle[0].text)
 					delete_chat(driver, chatTitle[0].text)
 				
 				
