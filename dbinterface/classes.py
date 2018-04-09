@@ -87,9 +87,26 @@ class Issue:
 	__status = None
 	__classification_dict = {}
 	
-	def __init__(self, msg_id, username):
+	def __init__(self, msg_id):
 		self.__info["id"]=msg_id
-		self.__info["phone_user"]=username
+		self.__info["phone_number"]=''
+		self.__info["user_id"]=None
+		self.__info["msg_id"]=None
+		self.__info["channel"]=''
+		self.__info["username"]=''
+		self.__info["firstname"]=''
+		self.__info["lastname"]=''
+		self.__info["date"]=None
+		self.__info["time"]=None
+		self.__info["text"]=""
+		self.__info["images"]=[]
+		self.__info["position"]["latitude"] = 0
+		self.__info["position"]["longitude"] = 0
+		
+		self.__category = None
+		self.__status = None
+		self.__classification_dict = {}
+
 		
 	def save(self):
 		saveIssue(self)
@@ -143,7 +160,7 @@ class Issue:
 		self.__classification_dict = classification_dict
 	
 	def printIssue(self):
-		print(self.__info, self.__category)
+		print(self.__info, self.__classification_dict)
 
 	def getLatitude(self):
 		return self.__info["position"]["latitude"]
@@ -161,10 +178,11 @@ class Issue:
 	def getIssueByMsgIdUserId(user_id, msg_id):
 		return None
 		
-	@property
-	def info(self):
-		tmp = self.getInfo()
-		imgs = tmp.get('images', [])
-		tmp['images_detail'] = [i.info for i in tmp.get('images', [])]		
-		return tmp
+	
+	#@property
+	#def info(self):
+		#tmp = self.getInfo()
+		#imgs = tmp.get('images', [])
+		#tmp['images_detail'] = [i.info for i in tmp.get('images', [])]		
+		#return tmp
 
