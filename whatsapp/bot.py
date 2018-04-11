@@ -38,7 +38,7 @@ driver = webdriver.Chrome(chrome_options=options, executable_path=driverPath)
 driver.get('https://web.whatsapp.com')
 driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.TAB)
 
-input("Choose a chat on whatsapp and press enter : ")
+#input("Choose a chat on whatsapp and press enter : ")
 chatHistory = []
 replyQueue = []
 firstRun = True
