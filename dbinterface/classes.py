@@ -16,15 +16,18 @@ def add_properties(fnz):
 
 class IssueImage:
 	
-	__file = None
-	__content = None
-	__classification_dict = {}
-	__category = None
-	__confidence = None
+	#__file = None
+	#__content = None
+	#__classification_dict = {}
+	#__category = None
+	#__confidence = None
 	
 	def __init__(self, filename):
 		self.__file = filename
 		self.__content = open(filename, 'rb').read()
+		self.__classification_dict = {}
+		self.__category = None
+		self.__confidence = None
 		#pass
 		
 	def getFilename(self):
@@ -50,6 +53,9 @@ class IssueImage:
 		self.__classification_dict = classification_dict
 		self.__category = list(classification_dict.keys())[list(classification_dict.values()).index(max(classification_dict.values()))]
 		self.__confidence = max(classification_dict.values())
+		
+	def printImage():
+		print( self.__file, self.__classification_dict, self.__category);
 
 	@property
 	def info(self):
@@ -64,34 +70,34 @@ class IssueImage:
 #@add_properties	
 class Issue:
 	
-	__info = {
-		"id": None,
-		"phone_number": '',
-		"user_id": None,
-		"msg_id": None,
-		"channel": '',
-		"username": '',
-		"firstname":'',
-		"lastname":'',
-		"date": None,
-		"time": None,
-		"text": "",
-		"images": [],
-		"position": {
-			"latitude": 0,
-			"longitude": 0
-		},
-	}
+	#__info = {
+		#"id": None,
+		#"phone_number": '',
+		#"user_id": None,
+		#"msg_id": None,
+		#"channel": '',
+		#"username": '',
+		#"firstname":'',
+		#"lastname":'',
+		#"date": None,
+		#"time": None,
+		#"text": "",
+		#"images": [],
+		#"position": {
+			#"latitude": 0,
+			#"longitude": 0
+		#},
+	#}
 	
-	__category = None
-	__status = None
-	__classification_dict = {}
+	#__category = None
+	#__status = None
+	#__classification_dict = None
 	
 	def __init__(self, msg_id):
-		self.__info["id"]=msg_id
+		self.__info = {}
+		self.__info["msg_id"]=msg_id
 		self.__info["phone_number"]=''
 		self.__info["user_id"]=None
-		self.__info["msg_id"]=None
 		self.__info["channel"]=''
 		self.__info["username"]=''
 		self.__info["firstname"]=''
@@ -100,6 +106,7 @@ class Issue:
 		self.__info["time"]=None
 		self.__info["text"]=""
 		self.__info["images"]=[]
+		self.__info["position"] = {}
 		self.__info["position"]["latitude"] = 0
 		self.__info["position"]["longitude"] = 0
 		
@@ -156,8 +163,8 @@ class Issue:
 	def getClassificationDict(self):
 		return self.__classification_dict
 
-	def setClassificationDict(self, classification_dict):
-		self.__classification_dict = classification_dict
+	def setClassificationDict(self, class_dict):
+		self.__classification_dict = class_dict
 	
 	def printIssue(self):
 		print(self.__info, self.__classification_dict)
@@ -179,10 +186,10 @@ class Issue:
 		return None
 		
 	
-	#@property
-	#def info(self):
-		#tmp = self.getInfo()
-		#imgs = tmp.get('images', [])
-		#tmp['images_detail'] = [i.info for i in tmp.get('images', [])]		
-		#return tmp
+	@property
+	def info(self):
+		tmp = self.getInfo()
+		imgs = tmp.get('images', [])
+		tmp['images_detail'] = [i.info for i in tmp.get('images', [])]		
+		return tmp
 

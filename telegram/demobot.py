@@ -253,8 +253,8 @@ def on_callback_query(msg):
         pprint.pprint(msg_to_save[chat_id], open(msg_dir + "/" + 'msg.dict', 'w'))
         segnalazione = msg_to_segnalazione(msg_to_save[chat_id], msg_dir)
         if segnalazione:
-            segnalazione.save()
             segnalazione.printIssue()
+            segnalazione.save()
             with open(msg_dir + "/" + 'issue.pickle', 'wb') as output:
                 pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
 
@@ -359,6 +359,7 @@ def msg_to_segnalazione(msg, msg_dir):
         segnalazione.setLatitude(lat)
         segnalazione.setLongitude(lon)
         segnalazione.setCategory(msg.get("category", ""))
+        print(text_classification_dict)
         segnalazione.setClassificationDict(text_classification_dict)
         for p in photo:
             photo_id = p["file_id"]  # dimensione maggiore

@@ -5,7 +5,7 @@ import pprint
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
-
+from selenium.common.exceptions import NoSuchElementException
 import time
 import traceback
 
@@ -39,14 +39,17 @@ def delete_chat(driver, chat_id):
     actionChains = ActionChains(driver)
     contacts = usersDiv.find_elements_by_class_name("_2wP_Y")
     print("inizio delete")
-
+    
+    
     for contact in contacts:
         chatTitle = contact.find_elements_by_class_name("_1wjpf")
         if chatTitle[0].text == chat_id:
             contact.click()
             # actionChains.move_to_element(contact)
             # actionChains.perform()
-            msg_menu = contact.find_element_by_class_name("ZR5SB").click()
+            contact.find_element_by_class_name("ZR5SB").click()
+
+            time.sleep(1)
             buttons_menu = driver.find_element_by_class_name("_3s1D4")
             buttons_menu.find_elements_by_class_name("_3lSL5")[2].click()
             # usersDiv.find_element_by_xpath('//*[@title="Elimina chat"]').click()
@@ -59,57 +62,6 @@ def delete_chat(driver, chat_id):
                 pop_up.find_elements_by_class_name("_1WZqU")[1].click()
 
 
-"""metodo per cancellare i messaggi ricevuti. da eseguire dopo aver salvato segnalazione"""
-
-
-# def delete_message_list(driver):
-##usare quando bot ha cliccato dentro il contatto
-
-# usersDiv = driver.find_element_by_id("side")
-# messageDiv = driver.find_element_by_id("main")
-# actionChains = ActionChains(driver)
-# contacts = usersDiv.find_elements_by_class_name("_2wP_Y")
-# print("inizio delete")
-
-# for contact in contacts:
-# chatTitle = contact.find_elements_by_class_name("_1wjpf")
-# if chatTitle[0].text == "Umberto":
-# contact.click()
-# messageList = messageDiv.find_elements_by_class_name("message-in")
-# for m in messageList:
-# try:
-# delete_msg(driver,m)
-# except:
-# print("Errore Eliminazione")
-
-# messageList = messageDiv.find_elements_by_class_name("message-in")
-
-# if messageList:
-# delete_message_list(driver)
-
-# def delete_msg(driver,m):
-# actionChains = ActionChains(driver)
-# usersDiv = driver.find_element_by_id("side")
-
-
-# actionChains.move_to_element(m)
-# actionChains.perform()
-# images = m.find_elements_by_tag_name("img")
-# if images:
-# msg_menu = m.find_element_by_class_name("_2R973")
-# else:
-# msg_menu = m.find_elements_by_class_name("_3kN0h")[0]
-# if msg_menu:
-# print("Trovato")
-##msg_menu[0].click()
-# msg_menu.click()
-# usersDiv.find_element_by_xpath('//*[@title="Elimina messaggio"]').click()
-# driver.implicitly_wait(1)
-# pop_up = driver.find_element_by_class_name("_1CnF3")
-# pop_up.find_elements_by_class_name("_1WZqU")[1].click()
-##driver.implicitly_wait(2)
-# else:
-# print("NO")
 
 def get_date_from_msg(text):
     date_rex = re.compile('\[(.+?)\]')
@@ -118,6 +70,7 @@ def get_date_from_msg(text):
     date = datetime(y, mo, d, h, mi)
     print(date)
     return date
+
 
 
 """
@@ -137,70 +90,71 @@ def save_msg(driver, messageList, chatTitle):
     text = ""
     m = {}
     photo = []
-    date = []
+    date = ""
     pos = []
 
     for m in messageList:
         images = m.find_elements_by_tag_name("img")
-        if images:
-            im = images[0]
-            pos_class = im.get_attribute("class")
-            # is_pop = im.find_elements_by_class_name("_1Qnxi")
-            if pos_class == "_1Qnxi":
-                print("posizione trovata")
-                father = im.find_element_by_xpath('..')
-                if father:
-                    pos = father.get_attribute("href")
-                    if ("maps" in pos):
-                        # https://maps.google.com/maps?q=44.7649225%2C10.3085252&z=17&hl=it
-                        # print(pos)
-                        lat_rex = re.compile(r'q=(.+?)%2C')
-                        long_rex = re.compile(r'%2C(.+?)&z=')
-                        lat = float(lat_rex.findall(pos)[0])
-                        lon = float(long_rex.findall(pos)[0])
-                        # print(lat,lon)
-                        pos = [lat, lon]
-                        print(pos)
+        audio = m.find_elements_by_tag_name("audio")
+        copyableText = m.find_elements_by_class_name("copyable-text")
+        if audio:
+            print ("Audio")
+        elif (images or copyableText):
+            if images:
+                im = images[0]
+                pos_class = im.get_attribute("class")
+                # is_pop = im.find_elements_by_class_name("_1Qnxi")
+                if pos_class == "_1Qnxi":
+                    print("posizione trovata")
+                    father = im.find_element_by_xpath('..')
+                    if father:
+                        pos = father.get_attribute("href")
+                        if ("maps" in pos):
+                            # https://maps.google.com/maps?q=44.7649225%2C10.3085252&z=17&hl=it
+                            # print(pos)
+                            lat_rex = re.compile(r'q=(.+?)%2C')
+                            long_rex = re.compile(r'%2C(.+?)&z=')
+                            lat = float(lat_rex.findall(pos)[0])
+                            lon = float(long_rex.findall(pos)[0])
+                            # print(lat,lon)
+                            pos = [lat, lon]
+                            print(pos)
 
 
 
-            else:
-                src = im.get_attribute("src").replace("blob:", "")
-                im.click()
-                # mpt = driver.find_elements_by_class_name("media-panel-tools")[0]
-                mpt = driver.find_elements_by_class_name("_3Kxus")[0]
-                buttons = mpt.find_elements_by_class_name("rAUz7")
-                # download
-                buttons[3].click()
-                # close window
-                buttons[4].click()
+                else:
+                    src = im.get_attribute("src").replace("blob:", "")
+                    im.click()
+                    # mpt = driver.find_elements_by_class_name("media-panel-tools")[0]
+                    mpt = driver.find_elements_by_class_name("_3Kxus")[0]
+                    buttons = mpt.find_elements_by_class_name("rAUz7")
+                    # download
+                    buttons[3].click()
+                    # close window
+                    buttons[4].click()
 
-                # look for last downloaded file
-                time.sleep(1)
-                downloaded_files = getorderedfiles(DOWNLOAD_PATH)
-                downloaded_files.reverse()
-                firstfile = downloaded_files.pop(0)
+                    # look for last downloaded file
+                    time.sleep(1)
+                    downloaded_files = getorderedfiles(DOWNLOAD_PATH)
+                    downloaded_files.reverse()
+                    firstfile = downloaded_files.pop(0)
 
-                if firstfile.startswith("WhatsApp"):
-                    print("Moving file : " + DOWNLOAD_PATH + firstfile)
-                    downloaded_fname = firstfile.replace("WhatsApp Image ", "")
-                    downloaded_fname = downloaded_fname.replace(" ", "_")
-                    downloaded_fname = downloaded_fname.replace(" ", "_")
-                    downloaded_fname = downloaded_fname.replace("_at_", "__")
+                    if firstfile.startswith("WhatsApp"):
+                        print("Moving file : " + DOWNLOAD_PATH + firstfile)
+                        downloaded_fname = firstfile.replace("WhatsApp Image ", "")
+                        downloaded_fname = downloaded_fname.replace(" ", "_")
+                        downloaded_fname = downloaded_fname.replace(" ", "_")
+                        downloaded_fname = downloaded_fname.replace("_at_", "__")
 
-                    shutil.move(DOWNLOAD_PATH + firstfile, msg_dir + "/%s" % downloaded_fname)
-                    photo.append(msg_dir + "/%s" % downloaded_fname)
+                        shutil.move(DOWNLOAD_PATH + firstfile, msg_dir + "/%s" % downloaded_fname)
+                        photo.append(msg_dir + "/%s" % downloaded_fname)
 
-                # content = open(filename, 'rb').read()
+                    # content = open(filename, 'rb').read()
 
-
-
-        else:
-            copyableText = m.find_elements_by_class_name("copyable-text")
-            # print("copyableText = ", copyableText)
             if copyableText:
-                for ct in copyableText[0:1]:
-                    print("ct = ", ct.text)
+                #for ct in copyableText[0:1]:
+                #    print("ct = ", ct.text)
+                ct = copyableText[0]
 
                 # precise timestamp data-pre-plain-text = [16:52, 18/3/2018] Guido Dondi
                 pre_text = copyableText[0].get_attribute("data-pre-plain-text")
@@ -258,8 +212,9 @@ def msg_to_segnalazione(msg, msg_dir):
         segnalazione = Issue(msg_id)
         segnalazione.setInfo("channel", "whatsapp")
         segnalazione.setInfo("text", text)
-        segnalazione.setInfo("date", date.strftime("%Y-%m-%d"))
-        segnalazione.setInfo("time", date.strftime("%H:%M:%S"))
+        if date:
+            segnalazione.setInfo("date", date.strftime("%Y-%m-%d"))
+            segnalazione.setInfo("time", date.strftime("%H:%M:%S"))
         segnalazione.setInfo("user_id", user_id)
         segnalazione.setInfo("phone_number", user_id)
 
@@ -284,23 +239,42 @@ def msg_to_segnalazione(msg, msg_dir):
 
 def main(driver, chatHistory, replyQueue, firstRun):
     driver.switch_to_window(driver.window_handles[0])
-
-    usersDiv = driver.find_element_by_id("side")
+    try:
+        usersDiv = driver.find_element_by_id("side")
+        actionChains = ActionChains(driver)
+        contacts = usersDiv.find_elements_by_class_name("_2wP_Y")
+    except NoSuchElementException:
+        contacts = []
+        print("Caricamento...")
     # messageDiv = driver.find_element_by_id("main")
-    actionChains = ActionChains(driver)
-
-    contacts = usersDiv.find_elements_by_class_name("_2wP_Y")
+    
 
     new_messages = []
     received_msgs = []
 
+    # DISTINGUERE DA USER A GROUP
+    # <span data-icon="default-user"
+    # <span data-icon="default-group"
+
+
+    
     for contact in contacts:
         chatTitle = contact.find_elements_by_class_name("_1wjpf")
         # print("chatTitle = ", chatTitle[0].text)
-        unread = contact.find_elements_by_class_name("unread")
+        #unread = contact.find_elements_by_class_name("unread")
         # forse al posto di unread ci vuole "OUeyt"
 
-        if chatTitle[0].text:
+
+        data_icon = contact.find_element_by_class_name("_3ZW2E")
+        try:
+            user = data_icon.find_element_by_xpath('.//span[@data-icon="default-user"]')
+        except NoSuchElementException:
+            user = None
+            print ("Gruppo")
+
+
+        if user:
+            print(chatTitle[0].text)
             # click on contact element and read all incoming messages
             ct = ""
             ts = ""
@@ -333,6 +307,7 @@ def main(driver, chatHistory, replyQueue, firstRun):
                     date = now.replace(hour=h, minute=mi)
 
                 if is_timeout(date):
+                    pass
                     save_msg(driver, messageList, chatTitle[0].text)
 
                     ##INVIO MESSAGGIO
@@ -342,65 +317,5 @@ def main(driver, chatHistory, replyQueue, firstRun):
 
                     delete_chat(driver, chatTitle[0].text)
 
-                """
-				# look for images..
-				images = m.find_elements_by_tag_name("img")
-				print("Images = ", images)
-				for im in images:
-					src = im.get_attribute("src").replace("blob:", "")
-					#print("im = ", src)
-					try:
-						os.makedirs(chatTitle[0].text)
-					except:
-						pass
-#					time.sleep(30)
-					# right click and save
-					#actionChains.context_click(im).perform()
-					#print("Keys.ARROW_DOWN = ", Keys.ARROW_DOWN)
-					#actionChains.send_keys(Keys.ARROW_DOWN).perform()
-					#actionChains.send_keys("l").perform()
-					im.click()
-					
-					# look for save image button
-#					driver.switch_to_window(driver.window_handles[0])
 
 
-					#mpt = driver.find_elements_by_class_name("media-panel-tools")[0]
-					mpt = driver.find_elements_by_class_name("_3Kxus")[0]
-					buttons = mpt.find_elements_by_class_name("rAUz7")
-#					print(buttons)
-					# download
-					buttons[3].click()
-					# close window
-					buttons[4].click()
-
-					# look for last downloaded file
-					downloaded_files = getorderedfiles(DOWNLOAD_PATH)
-					downloaded_files.reverse()
-					firstfile = downloaded_files[0]
-					
-					#print("downloaded_files = ", downloaded_files)
-					
-					#print(DOWNLOAD_PATH+firstfile)
-					#local_filename, headers = urllib.request.urlretrieve(src)
-					#print("local_filename = ", local_filename)
-					
-					if firstfile.startswith("WhatsApp"):
-						print("Moving file : " + DOWNLOAD_PATH+firstfile)
-						downloaded_fname =  firstfile.replace("WhatsApp Image ", "")
-						downloaded_fname =  downloaded_fname.replace(" ", "_")
-						downloaded_fname =  downloaded_fname.replace(" ", "_")
-						downloaded_fname =  downloaded_fname.replace("_at_", "__")
-						shutil.move(DOWNLOAD_PATH+firstfile, chatTitle[0].text + "/%s" % downloaded_fname)
-#					
-					time.sleep(2)
-
-#					urllib.urlretrieve(src, chatTitle[0].text + "/filename.png")
-#					f = urllib.request.urlopen(src)
-#					content = f.read()
-#					f.close()
-#					open(chatTitle[0].text + "/filename.png", "wb").write(content)
-					"""
-
-# delete_message_list(driver)
-# delete_chat(driver)
