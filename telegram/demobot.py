@@ -266,61 +266,61 @@ def on_chat_message(msg):
 
     global msg_to_save
     msg["saved"] = False
-    print (content_type, chat_type, chat_id, msg["message_id"])
-    try:
+    if chat_type == "private":
+        print (content_type, chat_type, chat_id, msg["message_id"])
+        try:
+            received_text = cleanChars(msg.get("text", ""))
+            bot_name = '@' + bot.getMe()["username"]
+            received_text = received_text.replace(bot_name, "")
 
-        received_text = cleanChars(msg.get("text", ""))
-        bot_name = '@' + bot.getMe()["username"]
-        received_text = received_text.replace(bot_name, "")
+            # gestione di messaggi con più foto, prendo ultima foto di messaggio attuale (dimensione più grande)
+            # poi va aggiunta in photo_list che poi conterrà solo le foto di dimensioni più grande inviate
+            photo = msg.get("photo", [])
+            if photo:
+                photo = [photo[-1]]
+            msg["photo"] = photo
 
-        # gestione di messaggi con più foto, prendo ultima foto di messaggio attuale (dimensione più grande)
-        # poi va aggiunta in photo_list che poi conterrà solo le foto di dimensioni più grande inviate
-        photo = msg.get("photo", [])
-        if photo:
-            photo = [photo[-1]]
-        msg["photo"] = photo
+            document = msg.get("document", [])
+            userinfo = msg["from"]
 
-        document = msg.get("document", [])
-        userinfo = msg["from"]
+            if msg.get("text", "") and msg.get("text", "")[0] == '/':
+                return menu_function(msg.get("text", ""), chat_id)
+            last_msg = store.last_msg(chat_id)
+            if (last_msg and last_msg["saved"] == False):
+                photo_list = last_msg.get("photo", [])
+                position = last_msg.get("location", [])
 
-        if msg.get("text", "") and msg.get("text", "")[0] == '/':
-            return menu_function(msg.get("text", ""), chat_id)
-        last_msg = store.last_msg(chat_id)
-        if (last_msg and last_msg["saved"] == False):
-            photo_list = last_msg.get("photo", [])
-            position = last_msg.get("location", [])
+                msg["text"] = last_msg.get("text", "") + " " + received_text
+                msg["photo"] = photo_list + photo
+                if not msg.get("location", []):
+                    msg["location"] = position
 
-            msg["text"] = last_msg.get("text", "") + " " + received_text
-            msg["photo"] = photo_list + photo
-            if not msg.get("location", []):
-                msg["location"] = position
+            # if document:
+            # document_id = document["file_id"]
+            # fname = document["file_name"] # dimensione maggiore
+            # bot.download_file(document_id, msg_dir + "/" + fname)
 
-        # if document:
-        # document_id = document["file_id"]
-        # fname = document["file_name"] # dimensione maggiore
-        # bot.download_file(document_id, msg_dir + "/" + fname)
+            msg_to_save[chat_id] = msg
+            store.put(msg)
+            keyboard_btns = []
+            L = []
+            L.append(InlineKeyboardButton(text="Invia", callback_data="save"))
+            L.append(InlineKeyboardButton(text="Aggiungi altro", callback_data="add"))
+            L.append(InlineKeyboardButton(text="Annulla", callback_data="delete"))
 
-        msg_to_save[chat_id] = msg
-        store.put(msg)
-        keyboard_btns = []
-        L = []
-        L.append(InlineKeyboardButton(text="Invia", callback_data="save"))
-        L.append(InlineKeyboardButton(text="Aggiungi altro", callback_data="add"))
-        L.append(InlineKeyboardButton(text="Annulla", callback_data="delete"))
-
-        keyboard_btns.append(L)
-        response = """Grazie %s \nSegnalazione ricevuta: "%s" \nVuole inviare o vuole aggiungere altro (messaggio o foto) ?""" % (
-        str(userinfo["first_name"]), msg.get('text', ''))
-        bot.sendMessage(chat_id, response, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_btns))
-
-
+            keyboard_btns.append(L)
+            response = """Grazie %s \nSegnalazione ricevuta: "%s" \nVuole inviare o vuole aggiungere altro (messaggio o foto) ?""" % (
+            str(userinfo["first_name"]), msg.get('text', ''))
+            bot.sendMessage(chat_id, response, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_btns))
 
 
 
-    except:
-        bot.sendMessage(chat_id, "Ooops! Qualcosa e' andato storto! Riprova, Grazie!")
-        bot.sendSticker(chat_id, "CAADAgADzwUAAmMr4gmeXsfnL_icMwI")
-        print (traceback.format_exc())
+
+
+        except:
+            bot.sendMessage(chat_id, "Ooops! Qualcosa e' andato storto! Riprova, Grazie!")
+            bot.sendSticker(chat_id, "CAADAgADzwUAAmMr4gmeXsfnL_icMwI")
+            print (traceback.format_exc())
 
 
 def msg_to_segnalazione(msg, msg_dir):
