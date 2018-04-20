@@ -179,7 +179,7 @@ def save_msg(driver, messageList, chatTitle):
     segnalazione = msg_to_segnalazione(m, msg_dir)
     if segnalazione:
         segnalazione.printIssue()
-        # segnalazione.save()
+        segnalazione.save()
         with open(msg_dir + "/" + 'issue.pickle', 'wb') as output:
             pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
 
@@ -213,8 +213,9 @@ def msg_to_segnalazione(msg, msg_dir):
         segnalazione.setInfo("channel", "whatsapp")
         segnalazione.setInfo("text", text)
         if date:
-            segnalazione.setInfo("date", date.strftime("%Y-%m-%d"))
-            segnalazione.setInfo("time", date.strftime("%H:%M:%S"))
+            segnalazione.setInfo("datetime", date.strftime("%Y-%m-%d %H:%M:%S"))
+            #segnalazione.setInfo("date", date.strftime("%Y-%m-%d"))
+            #segnalazione.setInfo("time", date.strftime("%H:%M:%S"))
         segnalazione.setInfo("user_id", user_id)
         segnalazione.setInfo("phone_number", user_id)
 

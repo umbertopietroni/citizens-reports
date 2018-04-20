@@ -1,4 +1,6 @@
 from db_interface import *
+from server_connection import *
+#from Database import *
 from functools import wraps
 import pprint
 
@@ -70,28 +72,7 @@ class IssueImage:
 #@add_properties	
 class Issue:
 	
-	#__info = {
-		#"id": None,
-		#"phone_number": '',
-		#"user_id": None,
-		#"msg_id": None,
-		#"channel": '',
-		#"username": '',
-		#"firstname":'',
-		#"lastname":'',
-		#"date": None,
-		#"time": None,
-		#"text": "",
-		#"images": [],
-		#"position": {
-			#"latitude": 0,
-			#"longitude": 0
-		#},
-	#}
-	
-	#__category = None
-	#__status = None
-	#__classification_dict = None
+
 	
 	def __init__(self, msg_id):
 		self.__info = {}
@@ -102,8 +83,9 @@ class Issue:
 		self.__info["username"]=''
 		self.__info["firstname"]=''
 		self.__info["lastname"]=''
-		self.__info["date"]=None
-		self.__info["time"]=None
+		self.__info["datetime"] = None
+		#self.__info["date"]=None
+		#self.__info["time"]=None
 		self.__info["text"]=""
 		self.__info["images"]=[]
 		self.__info["position"] = {}
@@ -116,7 +98,11 @@ class Issue:
 
 		
 	def save(self):
-		saveIssue(self)
+		if self.__info["channel"]=="telegram":
+			saveIssue(self)
+		elif self.__info["channel"]=="whatsapp":
+			postServer(self)
+			
 		
 	def getInfo(self, param=''):
 		if param:

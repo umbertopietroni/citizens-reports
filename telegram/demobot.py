@@ -35,7 +35,7 @@ msg_to_save = {}
 state = 0
 
 REPLY_BUTTONS_TEXT = [
-    [("Ambiente", "ambiente"), ("Sicurezza-Mobilità", "sicurezza")],
+    [("Ambiente", "ambiente"), ("Sicurezza", "sicurezza")],
     [("Manutenzione", "manutenzione"), ("Illuminazione", "illuminazione")],
     [("Altro", "altro"), ]
 ]
@@ -236,7 +236,7 @@ def on_callback_query(msg):
         for row in REPLY_BUTTONS_TEXT:
             L = []
             for col in row:
-                L.append(InlineKeyboardButton(text=col[0], callback_data=col[1]))
+                L.append(InlineKeyboardButton(text=col[0], callback_data=col[0]))
             keyboard_btns.append(L)
         keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
         bot.editMessageText(msg_id, 'Scegli quale categoria è più corretta', reply_markup=keyboard)
@@ -350,8 +350,9 @@ def msg_to_segnalazione(msg, msg_dir):
         segnalazione = Issue(msg_id)
         segnalazione.setInfo("channel", "telegram")
         segnalazione.setInfo("text", text)
-        segnalazione.setInfo("date", date.strftime("%Y-%m-%d"))
-        segnalazione.setInfo("time", date.strftime("%H:%M:%S"))
+        segnalazione.setInfo("datetime", date.strftime("%Y-%m-%d %H:%M:%S"))
+        #segnalazione.setInfo("date", date.strftime("%Y-%m-%d"))
+        #segnalazione.setInfo("time", date.strftime("%H:%M:%S"))
         segnalazione.setInfo("user_id", user_id)
         segnalazione.setInfo("username", username)
         segnalazione.setInfo("firstname", firstname)
