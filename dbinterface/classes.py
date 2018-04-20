@@ -1,4 +1,4 @@
-from db_interface import *
+#from db_interface import *
 from server_connection import *
 #from Database import *
 from functools import wraps
@@ -89,21 +89,17 @@ class Issue:
 		self.__info["text"]=""
 		self.__info["images"]=[]
 		self.__info["position"] = {}
-		self.__info["position"]["latitude"] = 0
-		self.__info["position"]["longitude"] = 0
+		self.__info["position"]["latitude"] = None
+		self.__info["position"]["longitude"] = None
 		
 		self.__category = None
-		self.__status = None
+		self.__status = 0
 		self.__classification_dict = {}
 
 		
 	def save(self):
-		if self.__info["channel"]=="telegram":
-			saveIssue(self)
-		elif self.__info["channel"]=="whatsapp":
-			postServer(self)
-			
-		
+		postServer(self)
+
 	def getInfo(self, param=''):
 		if param:
 			if param in self.__info.keys():

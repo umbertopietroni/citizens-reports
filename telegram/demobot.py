@@ -341,8 +341,8 @@ def msg_to_segnalazione(msg, msg_dir):
         date = datetime.fromtimestamp(pre_date)
 
         pos = msg.get("location", [])
-        lat = 0
-        lon = 0
+        lat = None
+        lon = None
         if pos:
             lat = pos.get("latitude", "")
             lon = pos.get("longitude", "")
