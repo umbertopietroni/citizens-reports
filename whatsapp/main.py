@@ -91,7 +91,7 @@ def save_msg(driver, messageList, chatTitle):
     m = {}
     photo = []
     date = ""
-    pos = []
+    location = []
 
     for m in messageList:
         images = m.find_elements_by_tag_name("img")
@@ -108,17 +108,21 @@ def save_msg(driver, messageList, chatTitle):
                     print("posizione trovata")
                     father = im.find_element_by_xpath('..')
                     if father:
-                        pos = father.get_attribute("href")
+                        #pos = father.get_attribute("href")
+                        pos = im.get_attribute("src")
                         if ("maps" in pos):
+                                
                             # https://maps.google.com/maps?q=44.7649225%2C10.3085252&z=17&hl=it
                             # print(pos)
-                            lat_rex = re.compile(r'q=(.+?)%2C')
-                            long_rex = re.compile(r'%2C(.+?)&z=')
-                            lat = float(lat_rex.findall(pos)[0])
-                            lon = float(long_rex.findall(pos)[0])
-                            # print(lat,lon)
-                            pos = [lat, lon]
-                            print(pos)
+                            #lat_rex = re.compile(r'q=(.+?)%2C')
+                            #long_rex = re.compile(r'%2C(.+?)&z=')
+                            lat_rex = re.compile(r'%7C(.+?)%2C%20')
+                            long_rex = re.compile(r'%2C%20(.+?)&signature')
+                            if lat_rex.findall(pos) and long_rex.findall(pos):
+                                lat = float(lat_rex.findall(pos)[0])
+                                lon = float(long_rex.findall(pos)[0])
+                                location = [lat, lon]
+                                print(location)
 
 
 
@@ -151,10 +155,10 @@ def save_msg(driver, messageList, chatTitle):
 
                     # content = open(filename, 'rb').read()
 
-            if copyableText:
+            elif copyableText:
                 #for ct in copyableText[0:1]:
                 #    print("ct = ", ct.text)
-                ct = copyableText[0]
+                ct = copyableText[1]
 
                 # precise timestamp data-pre-plain-text = [16:52, 18/3/2018] Guido Dondi
                 pre_text = copyableText[0].get_attribute("data-pre-plain-text")
@@ -171,7 +175,7 @@ def save_msg(driver, messageList, chatTitle):
         "text": text,
         "user": chatTitle,
         "photo": photo,
-        "location": pos,
+        "location": location,
     }
 
     # print(m)
@@ -225,10 +229,6 @@ def msg_to_segnalazione(msg, msg_dir):
         # segnalazione.setCategory(msg.get("category",""))
         # segnalazione.setClassificationDict(text_classification_dict)
         for p in photo:
-            # photo_id = p["file_id"] # dimensione maggiore
-            # filename = msg_dir + "/" + photo_id + ".jpg"
-            # img_classification_dict = p.get("photo_category",[])
-            # print(p)
             image = IssueImage(p)
             # print(image)
             segnalazione.addImage(image)
@@ -282,16 +282,23 @@ def main(driver, chatHistory, replyQueue, firstRun):
             messageList = []
             driver.implicitly_wait(1.5)
 
-            contact.click()
+            
 
             print("=" * 100)
             try:
+                contact.click()
                 messageDiv = driver.find_element_by_id("main")
                 messageList = messageDiv.find_elements_by_class_name("message-in")
+                messageOut = messageDiv.find_elements_by_class_name("message-out")
                 print("messageList = ", len(messageList))
 
             except:
                 print("No message")
+            if not messageOut:
+                ##INVIO MESSAGGIO INIZIALE
+                    input_box = driver.find_element_by_class_name('_2S1VP')
+                    input_box.send_keys("Grazie! Può inviare altri messaggi, foto o posizione. La segnalazione verrà presa in carico dal sistema qualche minuto dopo l'ultimo messaggio e le sarà inviato un messaggio di conferma.")
+                    driver.find_element_by_xpath('//span[@data-icon="send"]').click()
             if messageList:
                 ##cerco ultimo messaggio, testo o foto e calcolo tempo passato
                 last_msg = messageList[-1]
@@ -317,6 +324,11 @@ def main(driver, chatHistory, replyQueue, firstRun):
                     driver.find_element_by_xpath('//span[@data-icon="send"]').click()
 
                     delete_chat(driver, chatTitle[0].text)
+                    
+                    
+                    
+                    
+                    
 
 
 
