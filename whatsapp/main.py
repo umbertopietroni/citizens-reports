@@ -288,17 +288,22 @@ def main(driver, chatHistory, replyQueue, firstRun):
             try:
                 contact.click()
                 messageDiv = driver.find_element_by_id("main")
-                messageList = messageDiv.find_elements_by_class_name("message-in")
                 messageOut = messageDiv.find_elements_by_class_name("message-out")
-                print("messageList = ", len(messageList))
-
             except:
-                print("No message")
+                print("No contact")
             if not messageOut:
                 ##INVIO MESSAGGIO INIZIALE
                     input_box = driver.find_element_by_class_name('_2S1VP')
                     input_box.send_keys("Grazie! Può inviare altri messaggi, foto o posizione. La segnalazione verrà presa in carico dal sistema qualche minuto dopo l'ultimo messaggio e le sarà inviato un messaggio di conferma.")
                     driver.find_element_by_xpath('//span[@data-icon="send"]').click()
+                    #time.sleep(0.5)
+            try:
+                messageDiv = driver.find_element_by_id("main")
+                messageList = messageDiv.find_elements_by_class_name("message-in")
+                print("messageList = ", len(messageList))
+
+            except:
+                print("No message")
             if messageList:
                 ##cerco ultimo messaggio, testo o foto e calcolo tempo passato
                 last_msg = messageList[-1]
@@ -308,9 +313,9 @@ def main(driver, chatHistory, replyQueue, firstRun):
                     pre_text = copyableText[0].get_attribute("data-pre-plain-text")
                     date = get_date_from_msg(pre_text)
                 else:
-                    time = last_msg.find_element_by_class_name("_3EFt_")
+                    time_d = last_msg.find_element_by_class_name("_3EFt_")
                     print(time.text)
-                    h, mi = [int(s) for s in re.findall(r'\d+', time.text)]
+                    h, mi = [int(s) for s in re.findall(r'\d+', time_d.text)]
                     now = datetime.now()
                     date = now.replace(hour=h, minute=mi)
 
