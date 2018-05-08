@@ -190,7 +190,7 @@ def save_msg(driver, messageList, chatTitle):
 
 def is_timeout(date):
     now = datetime.now()
-    delta = timedelta(seconds=60)
+    delta = timedelta(seconds=180)
     print(now - date)
 
     if now - date > delta:
@@ -314,7 +314,7 @@ def main(driver, chatHistory, replyQueue, firstRun):
                     date = get_date_from_msg(pre_text)
                 else:
                     time_d = last_msg.find_element_by_class_name("_3EFt_")
-                    print(time.text)
+                    print(time_d.text)
                     h, mi = [int(s) for s in re.findall(r'\d+', time_d.text)]
                     now = datetime.now()
                     date = now.replace(hour=h, minute=mi)
