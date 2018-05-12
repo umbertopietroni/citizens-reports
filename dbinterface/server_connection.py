@@ -1,8 +1,20 @@
+"""
+Perform server requests
+"""
+
 import requests
 import json
+from urllib import parse
+
+
+hostname = 'http://montecchioreports.altervista.org'
+bot_key = ''
 
 
 def postServer(issue):
+    """
+    Save issue with a POST request
+    """
     user_dict = {"user_id": issue.getInfo("user_id"), "channel": issue.getInfo("channel"),
                  "phone_number": issue.getInfo("phone_number"), "username": issue.getInfo("username"),
                  "first_name": issue.getInfo("firstname"), "last_name": issue.getInfo("lastname")}
@@ -24,8 +36,41 @@ def postServer(issue):
 
     image_json = json.dumps(image)
     r = requests.post(
-        'http://montecchioreports.altervista.org/action/saveIssue',
+        hostname + '/action/saveIssue/' + bot_key + '/',
         data={'user': user_json, 'issue': issue_json, 'images': image_json},
         files=files
     )
     print('Server response: ' + r.text)
+
+
+def phoneExists(phone: str) -> bool:
+    """
+    Check if a phone number is already saved in database
+    :param phone:
+    :return: True if phone number exists
+    """
+    request = requests.get(
+        hostname + '/action/phoneExists/' + parse.quote_plus(phone) + '/' + bot_key + '/'
+    )
+    response = request.json()['response']
+    if type(response) is not bool:
+        print('Server response: ' + response)
+        return False
+    return response
+
+
+def phoneDelete(phone: str) -> bool:
+    """
+    Delete a phone number from database
+    :param phone:
+    :return: True if at least one phone number was deleted
+    """
+    request = requests.get(
+        hostname + '/action/phoneDelete/' + parse.quote_plus(phone) + '/' + bot_key + '/'
+    )
+    response = request.json()['response']
+    if type(response) is not bool:
+        print('Server response: ' + response)
+        return False
+    return response
+

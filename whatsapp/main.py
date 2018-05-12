@@ -21,6 +21,7 @@ import sys
 
 sys.path.insert(0, '../dbinterface/')
 from classes import *
+from server_connection import phoneExists, phoneDelete
 
 
 def getorderedfiles(dirpath):
@@ -106,23 +107,21 @@ def save_msg(driver, messageList, chatTitle):
                 # is_pop = im.find_elements_by_class_name("_1Qnxi")
                 if pos_class == "_1Qnxi":
                     print("posizione trovata")
-                    father = im.find_element_by_xpath('..')
-                    if father:
-                        #pos = father.get_attribute("href")
-                        pos = im.get_attribute("src")
-                        if ("maps" in pos):
-                                
-                            # https://maps.google.com/maps?q=44.7649225%2C10.3085252&z=17&hl=it
-                            # print(pos)
-                            #lat_rex = re.compile(r'q=(.+?)%2C')
-                            #long_rex = re.compile(r'%2C(.+?)&z=')
-                            lat_rex = re.compile(r'%7C(.+?)%2C%20')
-                            long_rex = re.compile(r'%2C%20(.+?)&signature')
-                            if lat_rex.findall(pos) and long_rex.findall(pos):
-                                lat = float(lat_rex.findall(pos)[0])
-                                lon = float(long_rex.findall(pos)[0])
-                                location = [lat, lon]
-                                print(location)
+                    #pos = father.get_attribute("href")
+                    pos = im.get_attribute("src")
+                    if ("maps" in pos):
+                            
+                        # https://maps.google.com/maps?q=44.7649225%2C10.3085252&z=17&hl=it
+                        # print(pos)
+                        #lat_rex = re.compile(r'q=(.+?)%2C')
+                        #long_rex = re.compile(r'%2C(.+?)&z=')
+                        lat_rex = re.compile(r'%7C(.+?)%2C%20')
+                        long_rex = re.compile(r'%2C%20(.+?)&signature')
+                        if lat_rex.findall(pos) and long_rex.findall(pos):
+                            lat = float(lat_rex.findall(pos)[0])
+                            lon = float(long_rex.findall(pos)[0])
+                            location = [lat, lon]
+                            print(location)
 
 
 
@@ -145,10 +144,12 @@ def save_msg(driver, messageList, chatTitle):
 
                     if firstfile.startswith("WhatsApp"):
                         print("Moving file : " + DOWNLOAD_PATH + firstfile)
-                        downloaded_fname = firstfile.replace("WhatsApp Image ", "")
-                        downloaded_fname = downloaded_fname.replace(" ", "_")
-                        downloaded_fname = downloaded_fname.replace(" ", "_")
-                        downloaded_fname = downloaded_fname.replace("_at_", "__")
+                        downloaded_fname = firstfile.replace("WhatsApp Image ", str(datetime.now()))
+                        #downloaded_fname = downloaded_fname.replace(" ", "_")
+                        #downloaded_fname = downloaded_fname.replace(" ", "_")
+                        #downloaded_fname = downloaded_fname.replace("_at_", "__")
+                        
+                        #downloaded_fname = datetime.now()
 
                         shutil.move(DOWNLOAD_PATH + firstfile, msg_dir + "/%s" % downloaded_fname)
                         photo.append(msg_dir + "/%s" % downloaded_fname)
@@ -168,7 +169,9 @@ def save_msg(driver, messageList, chatTitle):
                 # print("ts = ", ts.text)
 
                 text += ct.text + ' '
-
+    if (not date):
+        date = datetime.now()
+        
     m = {
         "message_id": ts,
         "date": date,
@@ -240,6 +243,7 @@ def msg_to_segnalazione(msg, msg_dir):
 
 def main(driver, chatHistory, replyQueue, firstRun):
     driver.switch_to_window(driver.window_handles[0])
+    
     try:
         usersDiv = driver.find_element_by_id("side")
         actionChains = ActionChains(driver)
@@ -293,9 +297,15 @@ def main(driver, chatHistory, replyQueue, firstRun):
                 print("No contact")
             if not messageOut:
                 ##INVIO MESSAGGIO INIZIALE
-                    input_box = driver.find_element_by_class_name('_2S1VP')
-                    input_box.send_keys("Grazie! Può inviare altri messaggi, foto o posizione. La segnalazione verrà presa in carico dal sistema qualche minuto dopo l'ultimo messaggio e le sarà inviato un messaggio di conferma.")
-                    driver.find_element_by_xpath('//span[@data-icon="send"]').click()
+                    if not phoneExists(chatTitle[0].text):
+                        input_box = driver.find_element_by_class_name('_2S1VP')
+                        input_box.send_keys("Benvenuto! Può inviare altri messaggi, foto o posizione. La segnalazione verrà presa in carico dal sistema qualche minuto dopo l'ultimo messaggio. Per salvare la segnalazione il sistema conserverà anche il suo numero di telefono. Se non vuole che ciò accada invii un messaggio con scritto: \"Cancellami\" e la segnalazione non verrà salvata. Può anche eliminare il suo numero in qualsiasi momento inviando lo stesso messaggio \"Cancellami\".")
+                        driver.find_element_by_xpath('//span[@data-icon="send"]').click()
+
+                    else:
+                        input_box = driver.find_element_by_class_name('_2S1VP')
+                        input_box.send_keys("Grazie! Può inviare altri messaggi, foto o posizione. La segnalazione verrà presa in carico dal sistema qualche minuto dopo l'ultimo messaggio e le sarà inviato un messaggio di conferma.")
+                        driver.find_element_by_xpath('//span[@data-icon="send"]').click()
                     #time.sleep(0.5)
             try:
                 messageDiv = driver.find_element_by_id("main")
@@ -304,12 +314,24 @@ def main(driver, chatHistory, replyQueue, firstRun):
 
             except:
                 print("No message")
+
             if messageList:
                 ##cerco ultimo messaggio, testo o foto e calcolo tempo passato
                 last_msg = messageList[-1]
                 copyableText = last_msg.find_elements_by_class_name("copyable-text")
                 if copyableText:
                     # precise timestamp -> data-pre-plain-text = [16:52, 18/3/2018] Guido Dondi:
+                    text = copyableText[0].text.lower().replace(" ", "").replace("!", "").replace("'", "").replace(".", "").replace(",", "")
+                    if (chatTitle[0].text == "+39 348 123 2452" and text=="restart"):
+                        delete_chat(driver, chatTitle[0].text)
+                        driver.get('https://web.whatsapp.com')
+                    if text == "cancellami":
+                        phoneDelete(chatTitle[0].text)
+                        input_box = driver.find_element_by_class_name('_2S1VP')
+                        input_box.send_keys("Elimino la segnalazione e il numero. Grazie e arrivederci.")
+                        driver.find_element_by_xpath('//span[@data-icon="send"]').click()
+                        delete_chat(driver, chatTitle[0].text)
+                        continue
                     pre_text = copyableText[0].get_attribute("data-pre-plain-text")
                     date = get_date_from_msg(pre_text)
                 else:
