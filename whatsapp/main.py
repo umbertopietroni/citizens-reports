@@ -30,8 +30,9 @@ def getorderedfiles(dirpath):
     a.sort(key=lambda s: os.path.getmtime(os.path.join(dirpath, s)))
     return a
 
-
-DOWNLOAD_PATH = "/home/umberto/Scaricati/"
+import getpass
+current_user = getpass.getuser()
+DOWNLOAD_PATH = "/home/{}/Scaricati/".format(current_user)
 
 
 def delete_chat(driver, chat_id):

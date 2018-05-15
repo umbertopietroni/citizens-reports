@@ -8,7 +8,7 @@ from urllib import parse
 
 
 hostname = 'http://montecchioreports.altervista.org'
-bot_key = ''
+bot_key = open('botkey.txt', 'r').read().replace("\n", "").replace("\r", "")
 
 
 def postServer(issue):
