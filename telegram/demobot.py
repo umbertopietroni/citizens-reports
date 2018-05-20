@@ -14,6 +14,10 @@ from classes import *
 
 sys.path.insert(0, '../classifiers/')
 from text_classification import *
+from issue_classification import predict_issue
+
+sys.path.insert(0, '../wsinterface/')
+from image_classification import predict_image
 
 import telepot
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
@@ -25,8 +29,7 @@ import pickle
 # from sklearn.feature_extraction.text import CountVectorizer
 # from sklearn.naive_bayes import MultinomialNB
 
-sys.path.insert(0, '../wsinterface/')
-from image_classification import predict_image, create_prob_dict
+
 
 bad_words = ["fanculo", "vaffa", "vaffanculo", "stronzo", "stronzi", "cazzo", "fottiti", "fottuto", "merda"]
 
@@ -73,7 +76,7 @@ def menu_function(text, chat_id):
 
 
 Per effettuare una segnalazione può scrivere più messaggi oppure 
-inviare una foto relativa alla segnalazione. 
+inviare delle foto relative alla segnalazione. 
 Quando la segnazione è completa prema sul tasto Invia.
 
 Può anche condividere la sua posizione
@@ -137,128 +140,141 @@ def on_callback_query(msg):
     chat_id = msg["message"]["chat"]["id"]
     msg_id = telepot.origin_identifier(msg)
 
-    # utente invia segnalazione corretta: calcolo della categoria e richiesta di conferma
-    # oppure utente invia foto e conferma che segnalazione precedente va associata alla foto
-    if (query_data == "save"):
-        ts = time.strftime("%Y-%m-%d--%H-%M-%S", time.localtime(time.time())) + "__" + str(time.time())
-        msg_dir = "inbox/" + ts
-        try:
-            os.makedirs(msg_dir)
-        except:
-            pass
-        try:
-            X = msg_to_save[chat_id].get("text", "")
-            # response = """Grazie!\nHo ricevuto la sua segnalazione: "%s".\n/menu_principale """ % (X[0])
+  
+    if msg_to_save.get(chat_id,[]) and (msg_to_save.get(chat_id,[]).get("saved","") == False):
+        
+        # utente invia segnalazione corretta: calcolo della categoria e richiesta di conferma
+        # oppure utente invia foto e conferma che segnalazione precedente va associata alla foto
+        if (query_data == "save"):
+            ts = time.strftime("%Y-%m-%d--%H-%M-%S", time.localtime(time.time())) + "__" + str(time.time())
+            msg_dir = "inbox/" + ts
+            try:
+                os.makedirs(msg_dir)
+            except:
+                pass
+            try:
+                X = msg_to_save[chat_id].get("text", "")
+                # response = """Grazie!\nHo ricevuto la sua segnalazione: "%s".\n/menu_principale """ % (X[0])
 
-            ##CALCOLO CATEGORIA TESTO
-            print(X)
-            category, categories_prob = predict_text(X)
-            msg_to_save[chat_id]["category"] = category
-            text_dict = create_prob_dict(categories_prob)
-            msg_to_save[chat_id]["text_category"] = text_dict
+                ##CALCOLO CATEGORIA TESTO
+                print(X)
+                category, categories_prob = predict_text(X)
+                
+                text_dict = create_prob_dict(categories_prob)
+                msg_to_save[chat_id]["text_category"] = text_dict
 
-            # CALCOLO CATEGORIA FOTO
-            photo_list = msg_to_save[chat_id].get("photo", [])
-            if photo_list:
-                # msg_to_save[chat_id]["photo_category"] = []
-                i = 0
-                for photo in photo_list:
-                    photo_id = photo["file_id"]  # dimensione maggiore
-                    filename = msg_dir + "/" + photo_id + ".jpg"
-                    bot.download_file(photo_id, filename)
+                # CALCOLO CATEGORIA FOTO
+                photo_list = msg_to_save[chat_id].get("photo", [])
+                photo_dict_array = []
+                if photo_list:
+                    
+                    # msg_to_save[chat_id]["photo_category"] = []
+                    i = 0
+                    for photo in photo_list:
+                        photo_id = photo["file_id"]  # dimensione maggiore
+                        filename = msg_dir + "/" + photo_id + ".jpg"
+                        bot.download_file(photo_id, filename)
 
-                    photo_category, photo_prob = predict_image(filename)
-                    dict_prob = create_prob_dict(photo_prob)
-                    msg_to_save[chat_id]["photo"][i]["photo_category"] = dict_prob
-                    i += 1
+                        photo_category, photo_prob = predict_image(filename)
+                        dict_prob = create_prob_dict(photo_prob)
+                        msg_to_save[chat_id]["photo"][i]["photo_category"] = dict_prob
+                        photo_dict_array.append(dict_prob)
+                        i += 1
 
-                    print (category, photo_category)
+                        print (category, photo_category)
+                
+                issue_category = predict_issue(text_dict,photo_dict_array)
+                print(issue_category)
+                msg_to_save[chat_id]["category"] = issue_category
+                
 
-            msg_to_save[chat_id]["saved"] = True
+                keyboard_btns = []
+                L = []
+                L.append(InlineKeyboardButton(text="Si", callback_data="si"))
+                L.append(InlineKeyboardButton(text="No", callback_data="no"))
+                keyboard_btns.append(L)
+                keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
 
+                response = """Grazie!\nHo ricevuto la sua segnalazione. Calcolato categoria %s: è corretta?""" % (issue_category)
+                bot.editMessageText(msg_id, response, reply_markup=keyboard)
+
+
+
+            except:
+                print (traceback.format_exc())
+
+
+
+        # utente sceglie di aggiungere altre informazioni ( non necessario, può semplicemente scrivere altro testo)
+        elif (query_data == "add"):
             keyboard_btns = []
-            L = []
-            L.append(InlineKeyboardButton(text="Si", callback_data="si"))
-            L.append(InlineKeyboardButton(text="No", callback_data="no"))
-            keyboard_btns.append(L)
             keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
-
-            response = """Grazie!\nHo ricevuto la sua segnalazione "%s". Calcolato categoria %s: è corretta?""" % (
-            X, category)
-            bot.editMessageText(msg_id, response, reply_markup=keyboard)
-
-
-        except:
-            print (traceback.format_exc())
-
-
-
-    # utente sceglie di aggiungere altre informazioni ( non necessario, può semplicemente scrivere altro testo)
-    elif (query_data == "add"):
-        keyboard_btns = []
-        keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
-        text = """Può inserire un altro messaggio o una foto da associare a questa segnalazione"""
-        bot.editMessageText(msg_id, text, reply_markup=keyboard)
-    # utente annulla segnalazione
-    elif (query_data == "delete"):
-        keyboard_btns = []
-        keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
-        text = """Segnalazione eliminata. Può scriverne una nuova"""
-        msg_to_save[chat_id]["saved"] = True
-        bot.editMessageText(msg_id, text, reply_markup=keyboard)
+            text = """Può inserire un altro messaggio, una foto o la posizione da associare a questa segnalazione"""
+            bot.editMessageText(msg_id, text, reply_markup=keyboard)
+        # utente annulla segnalazione
+        elif (query_data == "delete"):
+            keyboard_btns = []
+            keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
+            text = """Segnalazione eliminata. Può scriverne una nuova"""
+            msg_to_save[chat_id]["saved"] = True
+            bot.editMessageText(msg_id, text, reply_markup=keyboard)
 
 
-    # KEYBOARD DI GESTIONE SCELTA CATEGORIA (query_data = ["si","no","altri"]
-    # utente conferma che categoria calcolata è corretta: posso salvare la segnalazione
-    elif (query_data == "si"):
-        keyboard_btns = []
-        keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
-        text = """Grazie! La sua segnalazione associata alla categoria %s è stata registrata correttamente. \nPuò inserire una nuova segnalazione""" % \
-               msg_to_save[chat_id]["category"]
-        bot.editMessageText(msg_id, text, reply_markup=keyboard)
+        # KEYBOARD DI GESTIONE SCELTA CATEGORIA (query_data = ["si","no","altri"]
+        # utente conferma che categoria calcolata è corretta: posso salvare la segnalazione
+        elif (query_data == "si"):
+            keyboard_btns = []
+            keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
+            
+            text = """Grazie! La sua segnalazione associata alla categoria %s è stata registrata correttamente. \nPuò inserire una nuova segnalazione""" % \
+                   msg_to_save[chat_id]["category"]
+            bot.editMessageText(msg_id, text, reply_markup=keyboard)
 
-        ##SALVATAGGIO
-        pprint.pprint(msg_to_save[chat_id], open(msg_dir + "/" + 'msg.dict', 'w'))
-        segnalazione = msg_to_segnalazione(msg_to_save[chat_id], msg_dir)
-        if segnalazione:
-            segnalazione.printIssue()
-            segnalazione.save()
-            with open(msg_dir + "/" + 'issue.pickle', 'wb') as output:
-                pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
+            ##SALVATAGGIO
+            msg_to_save[chat_id]["saved"] = True
+            pprint.pprint(msg_to_save[chat_id], open(msg_dir + "/" + 'msg.dict', 'w'))
+            segnalazione = msg_to_segnalazione(msg_to_save[chat_id], msg_dir)
+            if segnalazione:
+                segnalazione.printIssue()
+                segnalazione.save()
+                with open(msg_dir + "/" + 'issue.pickle', 'wb') as output:
+                    pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
 
+        # categoria calcolata per utente è sbagliata: chiedo direttamente quale sia quella corretta
+        elif (query_data == "no"):
+            keyboard_btns = []
+            for row in REPLY_BUTTONS_TEXT:
+                L = []
+                for col in row:
+                    L.append(InlineKeyboardButton(text=col[0], callback_data=col[1]))
+                keyboard_btns.append(L)
+            keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
+            bot.editMessageText(msg_id, 'Scegli quale categoria è più corretta', reply_markup=keyboard)
+        # tutte gli altri tipi di callback nascono quando utente sceglie categoria corretta. Poi posso salvare la segnalazione
+        else:
+            keyboard_btns = []
+            keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
+            text = """Grazie! La sua segnalazione associata alla categoria %s è stata registrata correttamente. \nPuò inserire una nuova segnalazione""" % query_data
+            bot.editMessageText(msg_id, text, reply_markup=keyboard)
+            msg_to_save[chat_id]["category"] = query_data
 
-
-
-
-    # categoria calcolata per utente è sbagliata: chiedo direttamente quale sia quella corretta
-    elif (query_data == "no"):
-        keyboard_btns = []
-        for row in REPLY_BUTTONS_TEXT:
-            L = []
-            for col in row:
-                L.append(InlineKeyboardButton(text=col[0], callback_data=col[0]))
-            keyboard_btns.append(L)
-        keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
-        bot.editMessageText(msg_id, 'Scegli quale categoria è più corretta', reply_markup=keyboard)
-    # tutte gli altri tipi di callback nascono quando utente sceglie categoria corretta. Poi posso salvare la segnalazione
+            # salvataggio
+            msg_to_save[chat_id]["saved"] = True
+            pprint.pprint(msg_to_save[chat_id], open(msg_dir + "/" + 'msg.dict', 'w'))
+            segnalazione = msg_to_segnalazione(msg_to_save[chat_id], msg_dir)
+            if segnalazione:
+                segnalazione.printIssue()
+                segnalazione.save()
+                with open(msg_dir + "/" + 'issue.pickle', 'wb') as output:
+                    pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
     else:
+        #quando utente preme una vecchia keyboard e il messaggio è già stato inviato
         keyboard_btns = []
         keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
-
-        text = """Grazie! La sua segnalazione associata alla categoria %s è stata registrata correttamente. \nPuò inserire una nuova segnalazione""" % query_data
+        text = "Grazie!"
         bot.editMessageText(msg_id, text, reply_markup=keyboard)
-        msg_to_save[chat_id]["category"] = query_data
 
-        # salvataggio
-        pprint.pprint(msg_to_save[chat_id], open(msg_dir + "/" + 'msg.dict', 'w'))
-        segnalazione = msg_to_segnalazione(msg_to_save[chat_id], msg_dir)
-        if segnalazione:
-            segnalazione.printIssue()
-            segnalazione.save()
-            with open(msg_dir + "/" + 'issue.pickle', 'wb') as output:
-                pickle.dump(segnalazione, output, pickle.HIGHEST_PROTOCOL)
-
-    bot.answerCallbackQuery(query_id, text=query_data)
+    bot.answerCallbackQuery(query_id, text="")
 
 
 def on_chat_message(msg):
