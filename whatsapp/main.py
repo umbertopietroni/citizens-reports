@@ -13,8 +13,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import re
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime,timedelta
 import pickle
 
 import sys
@@ -30,9 +29,8 @@ def getorderedfiles(dirpath):
     a.sort(key=lambda s: os.path.getmtime(os.path.join(dirpath, s)))
     return a
 
-import getpass
-current_user = getpass.getuser()
-DOWNLOAD_PATH = "/home/{}/Scaricati/".format(current_user)
+
+DOWNLOAD_PATH = "/home/umberto/Scaricati/"
 
 
 def delete_chat(driver, chat_id):
@@ -128,6 +126,14 @@ def save_msg(driver, messageList, chatTitle):
 
                 else:
                     src = im.get_attribute("src").replace("blob:", "")
+
+                    #testo aggiunto come didascalia alla foto
+                    didasc = m.find_elements_by_class_name("_1RiwZ")
+                    if didasc:
+                        did_text = didasc[0].find_elements_by_class_name("copyable-text")
+                        if did_text:
+                            text += did_text[0].text+' '
+
                     im.click()
                     # mpt = driver.find_elements_by_class_name("media-panel-tools")[0]
                     mpt = driver.find_elements_by_class_name("_3Kxus")[0]
@@ -194,7 +200,7 @@ def save_msg(driver, messageList, chatTitle):
 
 def is_timeout(date):
     now = datetime.now()
-    delta = timedelta(seconds=180)
+    delta = timedelta(seconds=60)
     print(now - date)
 
     if now - date > delta:
@@ -243,7 +249,7 @@ def msg_to_segnalazione(msg, msg_dir):
 
 
 def main(driver, chatHistory, replyQueue, firstRun):
-    driver.switch_to_window(driver.window_handles[0])
+    #driver.switch_to_window(driver.window_handles[0])
     
     try:
         usersDiv = driver.find_element_by_id("side")
