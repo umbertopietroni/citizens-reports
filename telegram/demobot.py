@@ -256,7 +256,10 @@ def on_callback_query(msg):
             keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
             text = """Grazie! La sua segnalazione associata alla categoria %s è stata registrata correttamente. \nPuò inserire una nuova segnalazione""" % query_data
             bot.editMessageText(msg_id, text, reply_markup=keyboard)
-            msg_to_save[chat_id]["category"] = query_data
+            if query_data == "altro":
+                msg_to_save[chat_id]["category"] = None
+            else:
+                msg_to_save[chat_id]["category"] = query_data
 
             # salvataggio
             msg_to_save[chat_id]["saved"] = True
@@ -285,7 +288,12 @@ def on_chat_message(msg):
     if chat_type == "private":
         print (content_type, chat_type, chat_id, msg["message_id"])
         try:
+            if msg.get("caption", ""):
+                msg["text"]= cleanChars(msg["caption"])
             received_text = cleanChars(msg.get("text", ""))
+
+
+
             bot_name = '@' + bot.getMe()["username"]
             received_text = received_text.replace(bot_name, "")
 
