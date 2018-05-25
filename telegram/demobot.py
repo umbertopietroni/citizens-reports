@@ -155,12 +155,14 @@ def on_callback_query(msg):
             try:
                 X = msg_to_save[chat_id].get("text", "")
                 # response = """Grazie!\nHo ricevuto la sua segnalazione: "%s".\n/menu_principale """ % (X[0])
-
+                
                 ##CALCOLO CATEGORIA TESTO
                 print(X)
-                category, categories_prob = predict_text(X)
+                text_dict,category = None,None
                 
-                text_dict = create_prob_dict(categories_prob)
+                if (X):
+                    category, categories_prob = predict_text(X)
+                    text_dict = create_prob_dict(categories_prob)
                 msg_to_save[chat_id]["text_category"] = text_dict
 
                 # CALCOLO CATEGORIA FOTO
@@ -227,7 +229,7 @@ def on_callback_query(msg):
             keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_btns)
             
             text = """Grazie! La sua segnalazione associata alla categoria %s è stata registrata correttamente. \nPuò inserire una nuova segnalazione""" % \
-                   msg_to_save[chat_id]["category"]
+                   msg_to_save[chat_id].get("category","")
             bot.editMessageText(msg_id, text, reply_markup=keyboard)
 
             ##SALVATAGGIO
@@ -313,7 +315,8 @@ def on_chat_message(msg):
             if (last_msg and last_msg["saved"] == False):
                 photo_list = last_msg.get("photo", [])
                 position = last_msg.get("location", [])
-
+                
+                msg["category"]=None
                 msg["text"] = last_msg.get("text", "") + " " + received_text
                 msg["photo"] = photo_list + photo
                 if not msg.get("location", []):
