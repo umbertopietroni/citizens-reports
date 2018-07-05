@@ -36,7 +36,7 @@ def postServer(issue):
 
     image_json = json.dumps(image)
     r = requests.post(
-        hostname + '/action/saveIssue/' + bot_key + '/',
+        hostname + '/api/report/insert/?key=' + bot_key,
         data={'user': user_json, 'issue': issue_json, 'images': image_json},
         files=files
     )
@@ -50,9 +50,9 @@ def phoneExists(phone: str) -> bool:
     :return: True if phone number exists
     """
     request = requests.get(
-        hostname + '/action/phoneExists/' + parse.quote_plus(phone) + '/' + bot_key + '/'
+        hostname + '/api/privacy/phone_exists/' + parse.quote_plus(phone) + '/?key=' + bot_key
     )
-    response = request.json()['response']
+    response = request.json()['data']['response']
     if type(response) is not bool:
         print('Server response: ' + response)
         return False
@@ -66,9 +66,9 @@ def phoneDelete(phone: str) -> bool:
     :return: True if at least one phone number was deleted
     """
     request = requests.get(
-        hostname + '/action/phoneDelete/' + parse.quote_plus(phone) + '/' + bot_key + '/'
+        hostname + '/api/privacy/delete/' + parse.quote_plus(phone) + '/?key=' + bot_key
     )
-    response = request.json()['response']
+    response = request.json()['data']['response']
     if type(response) is not bool:
         print('Server response: ' + response)
         return False
