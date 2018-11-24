@@ -31,7 +31,7 @@ import pickle
 
 
 
-bad_words = ["fanculo", "vaffa", "vaffanculo", "stronzo", "stronzi", "cazzo", "fottiti", "fottuto", "merda"]
+bad_words = []
 
 users_category_choice = {}
 msg_to_save = {}
