@@ -14,36 +14,22 @@ The aim of this project was to create a system capable of:
 
 ## Dependencies
 
-MySQLdb
+
 ```
 sudo apt-get install python3-mysqldb 
-```
-Telepot
-```
+
 pip3 install telepot
-```
-Sklearn
-```
+
 pip3 install sklearn
-```
-NumPy
-```
+
 pip3 install numpy
-```
-SciPy
-```
+
 pip3 install scipy
-```
-Pandas
-```
+
 pip3 install pandas
-```
-Clarifai
-```
+
 pip3 install clarifai
-```
-Selenium
-```
+
 pip3 install selenium
 ```
 
